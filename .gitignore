@@ -1,0 +1,8 @@
+# my configuration
+main.py
+pso_searching.py
+PSO.py
+.gitignore
+
+# python
+*.pyc
