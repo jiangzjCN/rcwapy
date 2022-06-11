@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def kb(epsr, source):
+def baseK(epsr, source):
     kx0 = np.emath.sqrt(epsr) * np.sin(np.deg2rad(source[0])) * np.cos(np.deg2rad(source[1]))
     ky0 = np.emath.sqrt(epsr) * np.sin(np.deg2rad(source[0])) * np.sin(np.deg2rad(source[1]))
     return kx0, ky0
 
 
-def kp(kx0, ky0, period, hmcx, hmcy, lambda0):
+def inplaneK(kx0, ky0, period, hmcx, hmcy, lambda0):
     # generate column vectors of in-plane wavevectors for RCWA
     kx = kx0 - hmcx * lambda0 / period[0]
     ky = ky0 - hmcy * lambda0 / period[1]
@@ -16,7 +16,7 @@ def kp(kx0, ky0, period, hmcx, hmcy, lambda0):
     return kx.flatten(order='F'), ky.flatten(order='F')
 
 
-def ks(Kx, Ky, eps_gnd):
+def outplaneK(Kx, Ky, eps_gnd):
     # generate column vectors of out-plane wavevectors for standard RCWA
     I0 = np.ones_like(Kx)
     # I0 is important because sometimes conj(eps) may make the '0j' in eps

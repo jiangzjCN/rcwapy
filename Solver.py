@@ -9,7 +9,7 @@ def planewave(source, epsr, Kx, Ky, Kzr, Kzt, S):
     Kzr, Kzt = np.diag(Kzr), np.diag(Kzt)
 
     # generate source
-    kx0, ky0 = kb(epsr, source)
+    kx0, ky0 = baseK(epsr, source)
     kz0 = np.emath.sqrt(epsr - kx0 ** 2 - ky0 ** 2)
     kinc = [kx0, ky0, kz0]
     kinc = kinc / np.linalg.norm(kinc)
@@ -58,6 +58,7 @@ def farfield(c, Kx, Ky, Kz):
     power = np.zeros_like(Kx)
     axis_ratio = np.zeros_like(Kx)
     handness = np.zeros_like(Kx)
+    clcp, crcp = np.zeros_like(Kx)
     cx, cy, cz = c[0], c[1], c[2]
     # remove evesent waves
     index = np.nonzero(np.imag(Kz) == 0)
@@ -66,6 +67,7 @@ def farfield(c, Kx, Ky, Kz):
         ex, ey, ez = c[0][i], c[1][i], c[2][i]
         theta = np.arctan(np.emath.sqrt(kx ** 2 + ky ** 2) / np.abs(kz))
         phi = np.arctan2(ky, kx)
+
         # project to s polarization
         es = -ex * np.sin(phi) + ey * np.cos(phi)
         temp = ex * np.cos(phi) + ey * np.sin(phi)
@@ -73,8 +75,10 @@ def farfield(c, Kx, Ky, Kz):
         er = temp * np.cos(theta) - ez * np.sin(theta)
         assert abs(
             er) < 1e-5, 'Radian electric field is not perfectly eliminated'
+
         # power
         power[i] = np.abs(es) ** 2 + np.abs(ep) ** 2
+
         # axis ratio
         major = np.emath.sqrt(np.abs(es) ** 2 + np.abs(ep)
                               ** 2 + abs(es ** 2 + ep ** 2))
@@ -83,6 +87,7 @@ def farfield(c, Kx, Ky, Kz):
         if minor == 0:
             minor = 1e-8
         axis_ratio[i] = 20 * np.log10(major / abs(minor))
+
         # handness
         phasep = np.arctan2(np.imag(ep), np.real(ep))
         phases = np.arctan2(np.imag(es), np.real(es))
@@ -95,6 +100,11 @@ def farfield(c, Kx, Ky, Kz):
             handness[i] = 1  # right-handed
         else:
             handness[i] = -1  # left-handed
+
+        # LCP componet and RCP component
+        clcp[i] = (ep - 1j * es) / np.sqrt(2)
+        crcp[i] = (ep + 1j * es) / np.sqrt(2)
+
     return power, axis_ratio, handness
 
 
@@ -113,9 +123,9 @@ def solver1(model: Model, source, lam, N: list):
         if not model.is_homo[i]:
             epsf[:, :, i] = convfft(model.model[:, :, i], hmcx, hmcy)
     # generate wavevectors
-    kx0, ky0 = kb(model.eps_gnd[0], source)
-    Kx, Ky = kp(kx0, ky0, model.period, hmcx, hmcy, lam)
-    Kz0, Kzr, Kzt = ks(Kx, Ky, model.eps_gnd)
+    kx0, ky0 = baseK(model.eps_gnd[0], source)
+    Kx, Ky = inplaneK(kx0, ky0, model.period, hmcx, hmcy, lam)
+    Kz0, Kzr, Kzt = outplaneK(Kx, Ky, model.eps_gnd)
     # free space layer
     _, V0 = freelayer(Kx, Ky, Kz0)
     # reflection layer
@@ -144,3 +154,4 @@ def solver1(model: Model, source, lam, N: list):
         source, model.eps_gnd[0], Kx, Ky, Kzr, Kzt, S)
     # farfield projection
     return R, T, ita_r, ita_t, cr, ct
+    

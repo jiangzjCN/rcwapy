@@ -32,11 +32,14 @@ class Model:
     def add_layer(self, thickness):
         self.num_layer += 1
         self.thickness.append(thickness)
-        self.shadow = np.dstack((self.shadow, -1 * np.ones((self.grid[1], self.grid[0]))))
-        self.model = np.dstack((self.model, np.zeros((self.grid[1], self.grid[0]))))
+        self.shadow = np.dstack(
+            (self.shadow, -1 * np.ones((self.grid[1], self.grid[0]))))
+        self.model = np.dstack(
+            (self.model, np.zeros((self.grid[1], self.grid[0]))))
         self.template = np.concatenate((self.template, np.zeros((self.grid[1], self.grid[0], 1, self.num_material),
                                                                 dtype='bool')), axis=2)
-        self.is_homo = np.concatenate((self.is_homo, np.zeros(1, dtype='bool')))
+        self.is_homo = np.concatenate(
+            (self.is_homo, np.zeros(1, dtype='bool')))
 
     def add_circle(self, x0, y0, radius1, radius2, rotation, material, layer_number):
         self.step += 1
@@ -47,7 +50,8 @@ class Model:
         else:
             self.num_material += 1
             material_mark = self.num_material - 1
-            self.material = np.concatenate((self.material, np.array(material, ndmin=1)))
+            self.material = np.concatenate(
+                (self.material, np.array(material, ndmin=1)))
             self.template = np.concatenate((self.template, np.zeros((self.grid[1], self.grid[0], self.num_layer, 1),
                                                                     dtype='bool')), axis=3)
         rotation = np.deg2rad(rotation)
@@ -57,7 +61,8 @@ class Model:
         x = x - x0
         y = y - y0
         is_inside = (x * np.cos(rotation) + y * np.sin(rotation)) ** 2 / radius1 ** 2 + \
-                    (-x * np.sin(rotation) + y * np.cos(rotation)) ** 2 / radius2 ** 2
+                    (-x * np.sin(rotation) + y *
+                     np.cos(rotation)) ** 2 / radius2 ** 2
         temp = self.shadow[:, :, layer_number - 1]
         temp[is_inside <= 1] = material_mark
         self.shadow[:, :, layer_number - 1] = temp
@@ -85,16 +90,16 @@ class Model:
         x = x * np.cos(rotation) - y * np.sin(rotation)
         y = temp_x * np.sin(rotation) + y * np.cos(rotation)
         temp = self.shadow[:, :, layer_number - 1]
-        is_inside = np.logical_and(x <= length / 2, x >= -length / 2) & np.logical_and(y <= width / 2, y >= -width / 2)
+        is_inside = np.logical_and(
+            x <= length / 2, x >= -length / 2) & np.logical_and(y <= width / 2, y >= -width / 2)
         temp[is_inside] = material_mark
         self.shadow[:, :, layer_number - 1] = temp
 
     def check_model(self):
         for i in range(self.num_layer):
-            if -1 in self.shadow[:, :, i]:
-                print('WARNING: Layer', i + 1, 'is not completed')
-            else:
-                print('Layer', i + 1, 'is completed')
+            assert - \
+                1 not in self.shadow[:, :, i], 'WARNING: Layer' + \
+                str(i + 1) + ' is not completed'
 
     def gen_template(self):
         self.check_model()
@@ -142,7 +147,8 @@ class Model:
         fn = "D:\\Researches\\MaterialsData\\"
         data = pd.read_table(fn + material + '.txt', sep='\t', header=None)
         data = data.values
-        assert np.amax(data[:, 0]) > wavelength > np.amin(data[:, 0]), 'Wavelength is out of range'
+        assert np.amax(data[:, 0]) > wavelength > np.amin(
+            data[:, 0]), 'Wavelength is out of range'
         n = np.interp(wavelength, data[:, 0], data[:, 1])
         k = np.interp(wavelength, data[:, 0], data[:, 2])
         return (n - 1j * k) ** 2
