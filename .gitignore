@@ -2,6 +2,7 @@
 main.py
 pso_searching.py
 PSO.py
+sweep_theta.py
 .gitignore
 
 # python

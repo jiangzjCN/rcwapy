@@ -144,7 +144,7 @@ class Model:
 
     @staticmethod
     def get_eps(material, wavelength):
-        fn = "D:\\Researches\\MaterialsData\\"
+        fn = "D:\\Research\\MaterialsData\\"
         data = pd.read_table(fn + material + '.txt', sep='\t', header=None)
         data = data.values
         assert np.amax(data[:, 0]) > wavelength > np.amin(
